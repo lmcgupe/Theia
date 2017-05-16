@@ -6,27 +6,27 @@
  */
 
 import { Container } from "inversify";
-import { FrontendApplication, browserApplicationModule } from "theia/lib/application/browser";
-import { messagingModule } from "theia/lib/messaging/browser";
-import { navigatorModule } from "theia/lib/navigator/browser";
-import { fileSystemClientModule } from "theia/lib/filesystem/browser";
-import { editorModule } from "theia/lib/editor/browser";
-import { browserLanguagesModule } from 'theia/lib/languages/browser';
-import { monacoModule } from 'theia/lib/monaco/browser';
-import { electronClipboardModule } from 'theia/lib/application/electron-browser/clipboard/clipboard-module';
-import { electronMenuModule } from 'theia/lib/application/electron-browser/menu/menu-module';
-import "theia/src/application/browser/style/index.css";
-import "theia/src/monaco/browser/style/index.css";
-import "theia/src/navigator/browser/style/index.css";
-import "theia/src/terminal/browser/terminal.css";
+import { FrontendApplication, browserApplicationModule } from "theia-ide/lib/application/browser";
+import { messagingModule } from "theia-ide/lib/messaging/browser";
+import { navigatorModule } from "theia-ide/lib/navigator/browser";
+import { fileSystemClientModule } from "theia-ide/lib/filesystem/browser";
+import { editorModule } from "theia-ide/lib/editor/browser";
+import { browserLanguagesModule } from 'theia-ide/lib/languages/browser';
+import { monacoModule } from 'theia-ide/lib/monaco/browser';
+import { electronClipboardModule } from 'theia-ide/lib/application/electron-browser/clipboard/clipboard-module';
+import { electronMenuModule } from 'theia-ide/lib/application/electron-browser/menu/menu-module';
+import "theia-ide/src/application/browser/style/index.css";
+import "theia-ide/src/monaco/browser/style/index.css";
+import "theia-ide/src/navigator/browser/style/index.css";
+import "theia-ide/src/terminal/browser/terminal.css";
 
 // terminal extension
-import terminalFrontendModule from 'theia/lib/terminal/browser/terminal-frontend-module';
+import terminalFrontendModule from 'theia-ide/lib/terminal/browser/terminal-frontend-module';
 import "xterm/dist/xterm.css";
 
 // java extension
-import { browserJavaModule } from 'theia/lib/java/browser/browser-java-module';
-import 'theia/lib/java/browser/monaco-contribution';
+import { browserJavaModule } from 'theia-ide/lib/java/browser/browser-java-module';
+import 'theia-ide/lib/java/browser/monaco-contribution';
 
 (() => {
 

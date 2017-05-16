@@ -9,13 +9,13 @@ import 'reflect-metadata';
 import * as path from 'path';
 import { Container, injectable } from "inversify";
 import * as express from 'express';
-import { BackendApplication, BackendApplicationContribution, applicationModule } from "theia/lib/application/node";
-import { fileSystemServerModule } from "theia/lib/filesystem/node";
-import { messagingModule } from "theia/lib/messaging/node";
-import { nodeLanguagesModule } from 'theia/lib/languages/node';
-import { nodeJavaModule } from 'theia/lib/java/node';
-import { nodePythonModule } from 'theia/lib/languages/python/node/node-python-module';
-import terminalBackendModule from 'theia/lib/terminal/node/terminal-backend-module'
+import { BackendApplication, BackendApplicationContribution, applicationModule } from "theia-ide/lib/application/node";
+import { fileSystemServerModule } from "theia-ide/lib/filesystem/node";
+import { messagingModule } from "theia-ide/lib/messaging/node";
+import { nodeLanguagesModule } from 'theia-ide/lib/languages/node';
+import { nodeJavaModule } from 'theia-ide/lib/java/node';
+import { nodePythonModule } from 'theia-ide/lib/languages/python/node/node-python-module';
+import terminalBackendModule from 'theia-ide/lib/terminal/node/terminal-backend-module'
 
 // FIXME introduce default error handler contribution
 process.on('uncaughtException', function (err: any) {
