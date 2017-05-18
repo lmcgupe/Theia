@@ -17,6 +17,7 @@ import {
     TextDocument,
     TextEditor
 } from '../../editor/browser';
+import { PreferenceService } from "../../preferences/common"
 import { MonacoToProtocolConverter, ProtocolToMonacoConverter } from "monaco-languageclient";
 import { MonacoWorkspace } from "./monaco-workspace";
 
@@ -76,15 +77,38 @@ export class MonacoEditor implements TextEditor, IEditorReference {
     protected readonly onSelectionChangedEmitter = new Emitter<Range>();
     protected readonly onFocusChangedEmitter = new Emitter<boolean>();
 
+    protected readonly lineNumbers: string;
+
     constructor(
         readonly uri: URI,
         readonly node: HTMLElement,
         protected readonly m2p: MonacoToProtocolConverter,
         protected readonly p2m: ProtocolToMonacoConverter,
         protected readonly workspace: MonacoWorkspace,
+        protected readonly prefService: PreferenceService,
         options?: MonacoEditor.IOptions,
         override?: IEditorOverrideServices,
     ) {
+        this.prefService.onPreferenceChanged((pref) => {
+            switch (pref.preferenceName) {
+                case "lineNumbers": {
+                    let options: {};
+                    if (pref.newValue === "on") {
+                        options = {
+                            lineNumber: "on"
+                        };
+                    } else {
+                        options = {
+                            lineNumber: "off"
+                        };
+                    }
+                    this.editor.getModel().updateOptions(options);
+                    this.refresh();
+                }
+            }
+
+        });
+
         this.autoSizing = options && options.autoSizing !== undefined ? options.autoSizing : false;
         this.minHeight = options && options.minHeight !== undefined ? options.minHeight : -1;
         this.toDispose.push(this.editor = monaco.editor.create(this.node, {

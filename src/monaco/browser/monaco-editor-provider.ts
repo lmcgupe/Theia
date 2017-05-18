@@ -14,6 +14,8 @@ import { MonacoModelResolver } from "./monaco-model-resolver";
 import { MonacoContextMenuService } from "./monaco-context-menu";
 import { MonacoWorkspace } from "./monaco-workspace";
 import { MonacoCommandServiceFactory } from "./monaco-command-service";
+import { PreferenceService } from '../../preferences/common';
+
 
 @injectable()
 export class MonacoEditorProvider {
@@ -25,7 +27,9 @@ export class MonacoEditorProvider {
         @inject(MonacoToProtocolConverter) protected readonly m2p: MonacoToProtocolConverter,
         @inject(ProtocolToMonacoConverter) protected readonly p2m: ProtocolToMonacoConverter,
         @inject(MonacoWorkspace) protected readonly workspace: MonacoWorkspace,
+        @inject(PreferenceService) protected readonly prefService: PreferenceService,
         @inject(MonacoCommandServiceFactory) protected readonly commandServiceFactory: MonacoCommandServiceFactory
+
     ) { }
 
     get(uri: URI): Promise<MonacoEditor> {
@@ -35,7 +39,7 @@ export class MonacoEditorProvider {
             const node = document.createElement('div');
             const model = reference.object;
             const editor = new MonacoEditor(
-                uri, node, this.m2p, this.p2m, this.workspace, {
+                uri, node, this.m2p, this.p2m, this.workspace, this.prefService, {
                     model: model.textEditorModel,
                     wordWrap: false,
                     folding: true,

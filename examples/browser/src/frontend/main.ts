@@ -15,6 +15,7 @@ import { frontendLanguagesModule } from 'theia-core/lib/languages/browser';
 import { monacoModule } from 'theia-core/lib/monaco/browser';
 import { browserClipboardModule } from 'theia-core/lib/application/browser/clipboard/clipboard-module';
 import { browserMenuModule } from "theia-core/lib/application/browser/menu/menu-module";
+import { preferenceClientModule } from 'theia-core/lib/preferences/browser'
 import "theia-core/src/application/browser/style/index.css";
 import "theia-core/src/monaco/browser/style/index.css";
 import "theia-core/src/navigator/browser/style/index.css";
@@ -42,6 +43,8 @@ import { frontendCppModule } from 'theia-core/lib/cpp/browser';
     container.load(messagingModule);
     container.load(navigatorModule);
     container.load(fileSystemClientModule);
+    container.load(preferenceClientModule);
+
     container.load(editorModule);
     container.load(frontendLanguagesModule);
     container.load(monacoModule);

@@ -17,6 +17,8 @@ import { backendJavaModule } from 'theia-core/lib/java/node';
 import { backendPythonModule } from 'theia-core/lib/python/node';
 import { backendCppModule } from 'theia-core/lib/cpp/node';
 import terminalBackendModule from 'theia-core/lib/terminal/node/terminal-backend-module'
+import { } from 'theia-core/lib/preferences/node/'
+
 
 // FIXME introduce default error handler contribution
 process.on('uncaughtException', function (err: any) {

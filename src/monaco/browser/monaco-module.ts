@@ -20,6 +20,7 @@ import { MonacoEditorService } from "./monaco-editor-service";
 import { MonacoModelResolver } from "./monaco-model-resolver";
 import { MonacoContextMenuService } from "./monaco-context-menu";
 import { MonacoCommandService, MonacoCommandServiceFactory } from './monaco-command-service';
+// import { JsonPreferenceService, PreferenceService } from '../../preferences/common';
 
 
 decorate(injectable(), MonacoToProtocolConverter);
@@ -48,4 +49,6 @@ export const monacoModule = new ContainerModule(bind => {
     bind(CommandContribution).to(MonacoEditorCommandHandlers).inSingletonScope();
     bind(MenuContribution).to(MonacoEditorMenuContribution).inSingletonScope();
     bind(KeybindingContribution).to(MonacoKeybindingContribution).inSingletonScope();
+
+    // bind(PreferenceService).to(JsonPreferenceService).inSingletonScope();
 });
