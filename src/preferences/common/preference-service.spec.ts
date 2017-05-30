@@ -6,31 +6,70 @@
  */
 
 import { JsonPreferenceService, PreferenceService } from './preference-service';
-import { FileSystem, FileStat } from "../../filesystem/common/filesystem";
+import { FileSystem } from "../../filesystem/common/filesystem";
 import { FileSystemWatcher } from "../../filesystem/common/filesystem-watcher"
 import * as chai from "chai";
 import * as chaiAsPromised from "chai-as-promised";
+import * as fsXtra from "fs-extra";
+import * as os from "os";
+import URI from "../../application/common/uri";
+import { FileUri } from "../../application/node/file-uri";
+import { FileSystemNode } from "../../filesystem/node/node-filesystem"
 
 
 const expect = chai.expect;
 let prefService: PreferenceService;
 let fileWatcher: FileSystemWatcher;
 let fs: FileSystem;
+const TEST_ROOT = FileUri.create(os.tmpdir()).appendPath("node-fs-root");
+const uuidV1 = require('uuid/v1');
+let root: URI;
+let fileSystemNode: FileSystemNode;
+let uri: URI;
 
 before(() => {
     chai.config.showDiff = true;
     chai.config.includeStack = true;
     chai.should();
     chai.use(chaiAsPromised);
+
+    root = TEST_ROOT.appendPath(uuidV1());
+    fsXtra.mkdirsSync(FileUri.fsPath(root));
+
+    uri = root.appendPath(".theia/prefs.json");
+    fsXtra.createFileSync(FileUri.fsPath(uri));
+    fsXtra.writeFileSync(FileUri.fsPath(uri), '{"lineNumbers": "on"}', { encoding: "utf8" });
+
+    fs = new FileSystemNode(root);;
+    fileWatcher = new FileSystemWatcher();
+    prefService = new JsonPreferenceService(fs, fileWatcher, ".theia/prefs.json");
+
 });
 
-describe('preference-service', () => {
-    beforeEach(() => {
-        fs = new FileSystemStub();
-        fileWatcher = new FileSystemWatcher();
-        prefService = new JsonPreferenceService(fs, fileWatcher, ".theia/prefs.json");
-    });
+after(() => {
+    fsXtra.removeSync((FileUri.fsPath(uri)));
+    fsXtra.removeSync(FileUri.fsPath(root));
+});
 
+
+// class FileWatcherStub extends FileSystemWatcher {
+//     getFileSystemClient(): FileSystemClient {
+//         const emitter = this.onFileChangesEmitter
+//         return {
+//             onFileChanges(event: FileChangesEvent) {
+//                 emitter.fire(event)
+//             }
+//         }
+//     }
+
+//     private onFileChangesEmitter = new Emitter<FileChangesEvent>();
+
+//     get onFileChanges(): Event<FileChangesEvent> {
+//         return this.onFileChangesEmitter.event;
+//     }
+// }
+
+describe('preference-service', () => {
     describe('01 #has preference', () => {
         it('should return true for the has preference', () => {
             return expect(prefService.has("lineNumbers")).to.eventually.equal(true);
@@ -53,82 +92,17 @@ describe('preference-service', () => {
 
     describe('03 #onPreferenceChanged', () => {
         it('should get notified of changed pref', () => {
+            fileSystemNode = new FileSystemNode(root);
+            const stat = fileSystemNode.getFileStat(uri.toString());
 
+            stat.then((fileStat) => {
+                fileSystemNode.setContent(fileStat, '{"lineNumbers": "off"}');
+            });
+
+            // xtra test to try to trigger a change event - remove if not necessary
+            // uri = root.appendPath(".theia/prefs2.json");
+            // fsXtra.createFileSync(FileUri.fsPath(uri));
+            // fsXtra.writeFileSync(FileUri.fsPath(uri), '{"lineNumbers": "on"}', { encoding: "utf8" });
         });
     });
 });
-
-class FileSystemStub implements FileSystem {
-
-    dummyFileStatRoot: FileStat = {
-        uri: "/workspace",
-        lastModification: 20,
-        isDirectory: false,
-    }
-
-    dummyFileStat: FileStat = {
-        uri: ".theia/prefs.json",
-        lastModification: 20,
-        isDirectory: false,
-    }
-
-    // Stub resolveContent
-    resolveContent(uri: string, options?: { encoding?: string }): Promise<{ stat: FileStat, content: string }> {
-        if (uri === "/workspace/.theia/prefs.json") {
-            return new Promise<{ stat: FileStat, content: string }>((resolve) => {
-                resolve({ stat: this.dummyFileStat, content: '{"lineNumbers": "on"}' });
-            })
-        } else {
-            return new Promise<{ stat: FileStat, content: string }>((resolve) => {
-                resolve({ stat: this.dummyFileStat, content: "test" });
-            })
-        }
-    }
-    // Stub getWorkSpaceRoot()
-    getWorkspaceRoot(): Promise<FileStat> {
-        return new Promise<FileStat>((resolve) => {
-            resolve(this.dummyFileStatRoot)
-        });
-    }
-
-    getFileStat(uri: string): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    exists(uri: string): Promise<boolean> {
-        return new Promise<boolean>(() => { });
-    }
-
-    setContent(file: FileStat, content: string, options?: { encoding?: string }): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    move(sourceUri: string, targetUri: string, options?: { overwrite?: boolean }): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    copy(sourceUri: string, targetUri: string, options?: { overwrite?: boolean, recursive?: boolean }): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    createFile(uri: string, options?: { content?: string, encoding?: string }): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    createFolder(uri: string): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    touchFile(uri: string): Promise<FileStat> {
-        return new Promise<FileStat>(() => { });
-    }
-    delete(uri: string, options?: { moveToTrash?: boolean }): Promise<void> {
-        return new Promise<void>(() => { });
-    }
-    watchFileChanges(uri: string): Promise<void> {
-        return new Promise<void>(() => { });
-    }
-    unwatchFileChanges(uri: string): Promise<void> {
-        return new Promise<void>(() => { });
-
-    }
-    getEncoding(uri: string): Promise<string> {
-        return new Promise<string>(() => { });
-    }
-
-    dispose(): void { }
-}
