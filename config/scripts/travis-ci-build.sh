@@ -1,10 +1,11 @@
 #!/bin/bash
 npm install \
-&& npm run build \
 && npm run test \
-&& cd examples/browser \
+&& cd config/local-dependency-manager \
 && npm install \
-&& npm run build \
+&& cd ../../examples/browser \
+&& npm run bootstrap \
 && cd ../electron \
-&& npm install \
-&& npm run build
+&& npm run bootstrap \
+&& npm run test
+ 
