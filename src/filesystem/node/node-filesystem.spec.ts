@@ -11,7 +11,7 @@ import * as chaiAsPromised from "chai-as-promised";
 import * as fs from "fs-extra";
 import * as os from "os";
 import URI from "../../application/common/uri";
-import { FileUri } from "../../application/node/file-uri";
+//import { FileUri } from "../../application/node/file-uri";
 import { FileSystem } from "../common/filesystem";
 import { FileSystemNode } from "./node-filesystem";
 
