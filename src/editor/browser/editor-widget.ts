@@ -5,14 +5,11 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { Widget } from "@phosphor/widgets";
-import { Message } from "@phosphor/messaging";
-import { DisposableCollection, SelectionService } from '../../application/common';
+import { SelectionService } from '../../application/common';
+import { Widget, BaseWidget, Message } from '../../application/browser';
 import { TextEditor } from "./editor";
 
-export class EditorWidget extends Widget {
-
-    protected readonly toDispose = new DisposableCollection();
+export class EditorWidget extends BaseWidget {
 
     constructor(
         readonly editor: TextEditor,
@@ -22,23 +19,10 @@ export class EditorWidget extends Widget {
         this.toDispose.push(this.editor);
     }
 
-    dispose() {
-        if (this.isDisposed) {
-            return;
-        }
-        super.dispose();
-        this.toDispose.dispose();
-    }
-
     protected onActivateRequest(msg: Message): void {
         super.onActivateRequest(msg)
         this.editor.focus();
-        this.selectionService.selection = this.editor
-    }
-
-    protected onCloseRequest(msg: Message): void {
-        super.onCloseRequest(msg);
-        this.dispose();
+        this.selectionService.selection = this.editor;
     }
 
     protected onAfterAttach(msg: Message): void {

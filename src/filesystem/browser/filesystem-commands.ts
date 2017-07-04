@@ -16,8 +16,7 @@ import { UriSelection } from '../common/filesystem-selection';
 import { SingleTextInputDialog, ConfirmDialog } from "../../application/browser/dialogs";
 import { OpenerService, OpenHandler, open } from "../../application/browser";
 
-export namespace Commands {
-    export const FILE_MENU = "1_file";
+export namespace FileCommands {
     export const NEW_FILE = 'file:newFile';
     export const NEW_FOLDER = 'file:newFolder';
     export const FILE_OPEN = 'file:open';
@@ -33,18 +32,24 @@ export namespace Commands {
     export const FILE_DELETE = 'file:fileDelete';
 }
 
+export namespace FileMenus {
+    export const FILE = [MAIN_MENU_BAR, "1_file"];
+    export const NEW_GROUP = [...FILE, '1_new'];
+    export const OPEN_GROUP = [...FILE, '2_open'];
+}
+
 @injectable()
 export class FileMenuContribution implements MenuContribution {
 
-    contribute(registry: MenuModelRegistry) {
+    registerMenus(registry: MenuModelRegistry) {
         // Explicitly register the Edit Submenu
-        registry.registerSubmenu([MAIN_MENU_BAR], Commands.FILE_MENU, "File");
+        registry.registerSubmenu([MAIN_MENU_BAR], FileMenus.FILE[1], "File");
 
-        registry.registerMenuAction([MAIN_MENU_BAR, Commands.FILE_MENU, "1_new"], {
-            commandId: Commands.NEW_FILE
+        registry.registerMenuAction(FileMenus.NEW_GROUP, {
+            commandId: FileCommands.NEW_FILE
         });
-        registry.registerMenuAction([MAIN_MENU_BAR, Commands.FILE_MENU, "1_new"], {
-            commandId: Commands.NEW_FOLDER
+        registry.registerMenuAction(FileMenus.NEW_GROUP, {
+            commandId: FileCommands.NEW_FOLDER
         });
     }
 }
@@ -58,31 +63,31 @@ export class FileCommandContribution implements CommandContribution {
         @inject(OpenerService) protected readonly openerService: OpenerService
     ) { }
 
-    contribute(registry: CommandRegistry): void {
+    registerCommands(registry: CommandRegistry): void {
         registry.registerCommand({
-            id: Commands.NEW_FILE,
+            id: FileCommands.NEW_FILE,
             label: 'New File'
         });
         registry.registerCommand({
-            id: Commands.NEW_FOLDER,
+            id: FileCommands.NEW_FOLDER,
             label: 'New Folder'
         });
         registry.registerCommand({
-            id: Commands.FILE_OPEN,
+            id: FileCommands.FILE_OPEN,
             label: 'Open'
         });
         registry.registerCommand({
-            id: Commands.FILE_RENAME,
+            id: FileCommands.FILE_RENAME,
             label: 'Rename'
         });
         registry.registerCommand({
-            id: Commands.FILE_DELETE,
+            id: FileCommands.FILE_DELETE,
             label: 'Delete'
         });
 
         this.openerService.getOpeners().then(openers => {
             for (const opener of openers) {
-                const openWithCommand = Commands.FILE_OPEN_WITH(opener);
+                const openWithCommand = FileCommands.FILE_OPEN_WITH(opener);
                 registry.registerCommand(openWithCommand);
                 registry.registerHandler(openWithCommand.id,
                     new FileSystemCommandHandler(this.selectionService, uri => {
@@ -93,24 +98,23 @@ export class FileCommandContribution implements CommandContribution {
         });
 
         registry.registerHandler(
-            Commands.FILE_RENAME,
-            new FileSystemCommandHandler(this.selectionService, uri => {
-                return this.fileSystem.getFileStat(uri.toString())
-                    .then(stat => {
-                        let dialog = new SingleTextInputDialog('Rename File', {
-                            initialValue: uri.lastSegment,
-                            validate(name) {
-                                return validateFileName(name, stat)
-                            }
-                        })
-                        dialog.acceptancePromise.then(name =>
-                            this.fileSystem.move(uri.toString(), uri.parent.appendPath(name).toString()))
-                    })
-            })
+            FileCommands.FILE_RENAME,
+            new FileSystemCommandHandler(this.selectionService, uri =>
+                this.getParent(uri).then(parent => {
+                    const dialog = new SingleTextInputDialog({
+                        title: 'Rename File',
+                        initialValue: uri.path.base,
+                        validate: name => this.validateFileName(name, parent)
+                    });
+                    dialog.open().then(name =>
+                        this.fileSystem.move(uri.toString(), uri.parent.resolve(name).toString())
+                    )
+                })
+            )
         );
 
         registry.registerHandler(
-            Commands.FILE_COPY,
+            FileCommands.FILE_COPY,
             new FileSystemCommandHandler(this.selectionService, uri => {
                 this.clipboardService.setData({
                     text: uri.toString()
@@ -120,117 +124,119 @@ export class FileCommandContribution implements CommandContribution {
         );
 
         registry.registerHandler(
-            Commands.FILE_PASTE,
-            new FileSystemCommandHandler(this.selectionService, uri => {
-                let copyPath: URI
-                return getDirectory(uri, this.fileSystem)
-                    .then(stat => {
-                        let data: string = this.clipboardService.getData('text')
-                        copyPath = new URI(data)
-                        let targetUri = uri.appendPath(copyPath.lastSegment)
-                        return this.fileSystem.copy(copyPath.toString(), targetUri.toString())
-                    })
-            }, uri => !this.clipboardService.isEmpty && !!this.clipboardService.getData('text'))
+            FileCommands.FILE_PASTE,
+            new FileSystemCommandHandler(this.selectionService, uri =>
+                this.getDirectory(uri).then(stat => {
+                    const data: string = this.clipboardService.getData('text');
+                    const copyPath = new URI(data);
+                    const targetUri = uri.resolve(copyPath.path.base);
+                    return this.fileSystem.copy(copyPath.toString(), targetUri.toString());
+                }),
+                uri => !this.clipboardService.isEmpty && !!this.clipboardService.getData('text'))
         );
 
         registry.registerHandler(
-            Commands.NEW_FILE,
-            new FileSystemCommandHandler(this.selectionService, uri => {
-                return getDirectory(uri, this.fileSystem)
-                    .then(stat => {
-                        let freeUri = getFreeChild('Untitled', '.txt', stat)
-                        let dialog = new SingleTextInputDialog(`New File Below '${freeUri.parent.lastSegment}'`, {
-                            initialValue: freeUri.lastSegment,
-                            validate(name) {
-                                return validateFileName(name, stat)
-                            }
-                        })
-                        dialog.acceptancePromise.then(name =>
-                            this.fileSystem.createFile(new URI(stat.uri).appendPath(name).toString()))
+            FileCommands.NEW_FILE,
+            new FileSystemCommandHandler(this.selectionService, uri =>
+                this.getDirectory(uri).then(parent => {
+                    const parentUri = new URI(parent.uri);
+                    const vacantChildUri = this.findVacantChildUri(parentUri, parent, 'Untitled', '.txt');
+                    const dialog = new SingleTextInputDialog({
+                        title: `New File`,
+                        initialValue: vacantChildUri.path.base,
+                        validate: name => this.validateFileName(name, parent)
                     })
-            })
-        );
-
-        registry.registerHandler(
-            Commands.NEW_FOLDER,
-            new FileSystemCommandHandler(this.selectionService, uri => {
-                return getDirectory(uri, this.fileSystem)
-                    .then(stat => {
-                        let freeUri = getFreeChild('Untitled', '', stat)
-                        let dialog = new SingleTextInputDialog(`New Folder Below '${freeUri.parent.lastSegment}'`, {
-                            initialValue: freeUri.lastSegment,
-                            validate(name) {
-                                return validateFileName(name, stat)
-                            }
-                        })
-                        dialog.acceptancePromise.then(name =>
-                            this.fileSystem.createFolder(new URI(stat.uri).appendPath(name).toString()))
+                    dialog.open().then(name => {
+                        const fileUri = parentUri.resolve(name);
+                        this.fileSystem.createFile(fileUri.toString()).then(() => {
+                            open(this.openerService, fileUri)
+                        });
                     })
-            })
-        )
-
-        registry.registerHandler(
-            Commands.FILE_DELETE,
-            new FileSystemCommandHandler(this.selectionService, uri => {
-                let dialog = new ConfirmDialog('Delete File', `Do you really want to delete '${uri.lastSegment}'?`)
-                return dialog.acceptancePromise.then(() => {
-                    return this.fileSystem.delete(uri.toString())
                 })
+            )
+        );
+
+        registry.registerHandler(
+            FileCommands.NEW_FOLDER,
+            new FileSystemCommandHandler(this.selectionService, uri =>
+                this.getDirectory(uri).then(parent => {
+                    const parentUri = new URI(parent.uri);
+                    const vacantChildUri = this.findVacantChildUri(parentUri, parent, 'Untitled');
+                    const dialog = new SingleTextInputDialog({
+                        title: `New Folder`,
+                        initialValue: vacantChildUri.path.base,
+                        validate: name => this.validateFileName(name, parent)
+                    });
+                    dialog.open().then(name =>
+                        this.fileSystem.createFolder(parentUri.resolve(name).toString())
+                    );
+                })
+            )
+        )
+
+        registry.registerHandler(
+            FileCommands.FILE_DELETE,
+            new FileSystemCommandHandler(this.selectionService, uri => {
+                const dialog = new ConfirmDialog({
+                    title: 'Delete File',
+                    msg: `Do you really want to delete '${uri.path.base}'?`
+                });
+                return dialog.open().then(() => {
+                    return this.fileSystem.delete(uri.toString())
+                });
             })
         )
 
         registry.registerHandler(
-            Commands.FILE_OPEN,
+            FileCommands.FILE_OPEN,
             new FileSystemCommandHandler(this.selectionService,
                 uri => open(this.openerService, uri)
             )
         );
     }
-}
 
-/**
- * returns an error message or an empty string if the file name is valid
- * @param name the simple file name to validate
- * @param parent the parent directory's file stat
- */
-function validateFileName(name: string, parent: FileStat): string {
-    if (!name || !name.match(/^[\w\-. ]+$/)) {
-        return "Invalid name, try other"
-    } else {
+    /**
+     * returns an error message or an empty string if the file name is valid
+     * @param name the simple file name to validate
+     * @param parent the parent directory's file stat
+     */
+    protected validateFileName(name: string, parent: FileStat): string {
+        if (!name || !name.match(/^[\w\-. ]+$/)) {
+            return "Invalid name, try other";
+        }
         if (parent.children) {
-            for (let child of parent.children) {
-                if (new URI(child.uri).lastSegment === name) {
-                    return 'A file with this name already exists.'
+            for (const child of parent.children) {
+                if (new URI(child.uri).path.base === name) {
+                    return 'A file with this name already exists.';
                 }
             }
         }
+        return '';
     }
-    return ''
-}
 
-function getDirectory(candidate: URI, fileSystem: FileSystem): Promise<FileStat> {
-    return fileSystem.getFileStat(candidate.toString())
-        .then(stat => {
-            if (!stat || !stat.isDirectory) {
-                // not folder? get parent
-                return fileSystem.getFileStat(new URI(stat.uri).parent.toString())
-            } else {
-                return Promise.resolve(stat)
-            }
-        })
-}
-
-function getFreeChild(prefix: string, suffix: string, fileStat: FileStat): URI {
-    let infixes = ['', ' 1', ' 2', ' 3', ' 4', ' 5']
-    let parentUri = new URI(fileStat.uri)
-    for (let infix of infixes) {
-        let candidate = prefix + infix + suffix
-        let children: FileStat[] = fileStat.children!
-        if (!children.some(stat => new URI(stat.uri).lastSegment === candidate)) {
-            return parentUri.appendPath(candidate)
+    protected async getDirectory(candidate: URI): Promise<FileStat> {
+        const stat = await this.fileSystem.getFileStat(candidate.toString());
+        if (stat.isDirectory) {
+            return stat;
         }
+        return this.getParent(candidate);
     }
-    return parentUri.appendPath(prefix + suffix)
+
+    protected getParent(candidate: URI): Promise<FileStat> {
+        return this.fileSystem.getFileStat(candidate.parent.toString());
+    }
+
+    protected findVacantChildUri(parentUri: URI, parent: FileStat, name: string, ext: string = ''): URI {
+        const children = !parent.children ? [] : parent.children!.map(child => new URI(child.uri));
+
+        let index = 1;
+        let base = name + ext;
+        while (children.some(child => child.path.base === base)) {
+            index = index + 1;
+            base = name + '_' + index + ext;
+        }
+        return parentUri.resolve(base);
+    }
 }
 
 export class FileSystemCommandHandler implements CommandHandler {

@@ -23,7 +23,7 @@ export interface CommandHandler {
 export const CommandContribution = Symbol("CommandContribution");
 
 export interface CommandContribution {
-    contribute(registry: CommandRegistry): void;
+    registerCommands(commands: CommandRegistry): void;
 }
 
 export const CommandService = Symbol("CommandService");
@@ -37,18 +37,18 @@ export interface CommandService {
 @injectable()
 export class CommandRegistry implements CommandService {
 
-    private _commands: { [id: string]: Command };
-    private _handlers: { [id: string]: CommandHandler[] };
+    protected readonly _commands: { [id: string]: Command } = {};
+    protected readonly _handlers: { [id: string]: CommandHandler[] } = {};
 
-    constructor( @inject(ContributionProvider) @named(CommandContribution) private contributionProvider: ContributionProvider<CommandContribution>) {
-    }
+    constructor(
+        @inject(ContributionProvider) @named(CommandContribution)
+        protected readonly contributionProvider: ContributionProvider<CommandContribution>
+    ) { }
 
-    initialize(): void {
-        this._commands = {};
-        this._handlers = {};
+    onStart(): void {
         const contributions = this.contributionProvider.getContributions();
         for (const contrib of contributions) {
-            contrib.contribute(this);
+            contrib.registerCommands(this);
         }
     }
 

@@ -8,6 +8,12 @@ describe('theia main elements loading', () => {
 
     before(() => {
         browser.url(url);
+        if (browser.getTitle() == 'localhost') {
+            browser.waitUntil(function () {
+            console.log('browser not loaded yet, trying again ');
+            return browser.getTitle() == '';
+            }, 3600000), 3000;        
+        }
         mainPage = new MainPage(browser);
 
     });
@@ -19,6 +25,7 @@ describe('theia main elements loading', () => {
     });
 
     it('files panel is showing', () => {
+        
         mainPage.waitForLoadingPanels();
 
         // Panel is closed

@@ -5,7 +5,7 @@
  * You may obtain a copy of the License at http://www.apache.org/licenses/LICENSE-2.0
  */
 
-import { interfaces } from "inversify/dts/interfaces/interfaces";
+import { interfaces } from "inversify";
 
 export const ContributionProvider = Symbol("ContributionProvider")
 
@@ -27,11 +27,15 @@ class ContainerBasedContributionProvider<T extends object> implements Contributi
 
     getContributions(): T[] {
         if (this.services === undefined) {
-            try {
-                this.services = this.container.getAll(this.serviceIdentifier)
-            } catch (error) {
-                console.warn(error);
-                this.services = []
+            if (this.container.isBound(this.serviceIdentifier)) {
+                try {
+                    this.services = this.container.getAll(this.serviceIdentifier);
+                } catch (error) {
+                    console.error(error);
+                    this.services = [];
+                }
+            } else {
+                this.services = [];
             }
         }
         return this.services

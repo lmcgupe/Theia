@@ -6,10 +6,12 @@
  */
 
 import Uri from 'vscode-uri';
+import { Path } from "./path";
 
 export default class URI {
 
     private readonly codeUri: Uri;
+    private _path: Path | undefined;
 
     constructor(uri?: string | Uri) {
         if (uri === undefined) {
@@ -21,26 +23,40 @@ export default class URI {
         }
     }
 
+    get displayName(): string {
+        const base = this.path.base;
+        if (base) {
+            return base;
+        }
+        if (this.path.isRoot) {
+            return this.path.toString();
+        }
+        return '';
+    }
+
+    /**
+     * Return all uri from the current to the top most.
+     */
+    get allLocations(): URI[] {
+        const locations = [];
+        let location: URI = this;
+        while (!location.path.isRoot) {
+            locations.push(location);
+            location = location.parent;
+        }
+        locations.push(location);
+        return locations;
+    }
+
     get parent(): URI {
-        let str = this.codeUri.toString()
-        return new URI(str.substr(0, str.lastIndexOf('/')))
+        if (this.path.isRoot) {
+            return this;
+        }
+        return this.withPath(this.path.dir);
     }
 
-    get lastSegment(): string {
-        let path = this.path
-        let idx = path.lastIndexOf('/')
-        if (idx === -1) {
-            return path
-        } else {
-            return path.substr(idx + 1)
-        }
-    }
-
-    appendPath(toAppend: string): URI {
-        if (!toAppend) {
-            return this
-        }
-        return this.withPath(this.codeUri.path + "/" + toAppend)
+    resolve(path: string | Path): URI {
+        return this.withPath(this.path.join(path.toString()));
     }
 
     /**
@@ -82,10 +98,10 @@ export default class URI {
     /**
      * return a new URI replacing the current with the given path
      */
-    withPath(path: string): URI {
+    withPath(path: string | Path): URI {
         const newCodeUri = Uri.from({
             ...this.codeUri.toJSON(),
-            path
+            path: path.toString()
         })
         return new URI(newCodeUri);
     }
@@ -141,8 +157,11 @@ export default class URI {
         return this.codeUri.authority
     }
 
-    get path(): string {
-        return this.codeUri.path
+    get path(): Path {
+        if (this._path === undefined) {
+            this._path = new Path(this.codeUri.path);
+        }
+        return this._path;
     }
 
     get query(): string {

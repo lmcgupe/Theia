@@ -8,7 +8,7 @@
 import { Endpoint } from '../../application/common/endpoint';
 import { injectable } from "inversify";
 import { listen as doListen, Logger, ConsoleLogger } from "vscode-ws-jsonrpc";
-import { ConnectionHandler, JsonRpcProxyFactory } from "../common";
+import { ConnectionHandler, JsonRpcProxyFactory, JsonRpcProxy } from "../common";
 const ReconnectingWebSocket = require('reconnecting-websocket');
 
 export interface WebSocketOptions {
@@ -28,9 +28,12 @@ export class WebSocketConnectionProvider {
      * An optional target can be provided to handle
      * notifications and requests from a remote side.
      */
-    createProxy<T extends object>(path: string, target?: object, options?: WebSocketOptions): T {
-        const factory = new JsonRpcProxyFactory<T>(path, target);
-        this.listen(factory, options);
+    createProxy<T extends object>(path: string, target?: object, options?: WebSocketOptions): JsonRpcProxy<T> {
+        const factory = new JsonRpcProxyFactory<T>(target);
+        this.listen({
+            path,
+            onConnection: c => factory.listen(c)
+        }, options);
         return factory.createProxy();
     }
 

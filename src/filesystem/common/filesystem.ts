@@ -7,6 +7,8 @@
 
 import { Disposable } from '../../application/common';
 
+export const fileSystemPath = '/services/filesystem';
+
 export const FileSystem = Symbol("FileSystem");
 
 export interface FileSystem extends Disposable {
@@ -84,73 +86,16 @@ export interface FileSystem extends Disposable {
     delete(uri: string, options?: { moveToTrash?: boolean }): Promise<void>;
 
     /**
-     * Allows to start a watcher that reports file change events on the provided resource.
-     *
-     * By default the workspace root and all its children are watched.
-     * It should be used only to start watching files outside of the workspace root.
-     *
-     * Use `FileSystemWatcher` to get notified about file changes.
-     *
-     * Resolve when watching of the given uri is started.
-     * Reject if a file for the given uri does not exist.
-     */
-    watchFileChanges(uri: string): Promise<void>;
-
-    /**
-     * Allows to stop a watcher on the provided resource or absolute fs path.
-     */
-    unwatchFileChanges(uri: string): Promise<void>;
-
-    /**
      * Returns the encoding of the given file resource.
      */
     getEncoding(uri: string): Promise<string>;
 
     /**
-     * Returns the workspace root
+     * Return list of available roots.
      */
-    getWorkspaceRoot(): Promise<FileStat>;
+    getRoots(): Promise<FileStat[]>;
 
 }
-
-export namespace FileSystem {
-    export declare type Configuration = {
-        encoding: string,
-        recursive: boolean,
-        overwrite: boolean,
-        moveToTrash: true,
-    };
-}
-
-export interface FileSystemClient {
-    /**
-     * Notifies about file changes
-     */
-    onFileChanges(event: FileChangesEvent): void
-}
-
-export class FileChangesEvent {
-    constructor(public readonly changes: FileChange[]) { }
-}
-
-export class FileChange {
-
-    constructor(
-        public readonly uri: string,
-        public readonly type: FileChangeType) { }
-
-    equals(other: any): boolean {
-        return other instanceof FileChange && other.type === this.type && other.uri === this.uri;
-    }
-
-}
-
-export enum FileChangeType {
-    UPDATED = 0,
-    ADDED = 1,
-    DELETED = 2
-}
-
 
 /**
  * A file resource with meta information.

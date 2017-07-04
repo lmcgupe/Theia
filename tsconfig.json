@@ -21,8 +21,5 @@
   },
   "include": [
     "src"
-  ],
-  "files": [
-    "src/monaco/typings/monaco/index.d.ts"
   ]
 }

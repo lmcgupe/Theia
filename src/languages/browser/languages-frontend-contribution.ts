@@ -7,8 +7,8 @@
 
 import { injectable, inject, named } from "inversify";
 import { ContributionProvider } from '../../application/common';
-import { FrontendApplication, FrontendApplicationContribution } from "../../application/browser";
-import { LanguageClientContribution } from "./language-client-contribution";
+import { FrontendApplication, FrontendApplicationContribution } from '../../application/browser';
+import { LanguageClientContribution } from './language-client-contribution';
 
 @injectable()
 export class LanguagesFrontendContribution implements FrontendApplicationContribution {
@@ -22,7 +22,7 @@ export class LanguagesFrontendContribution implements FrontendApplicationContrib
         for (const contribution of this.contributions.getContributions()) {
             contribution.waitForActivation(app).then(() =>
                 contribution.activate(app)
-            );
+            )
         }
     }
 

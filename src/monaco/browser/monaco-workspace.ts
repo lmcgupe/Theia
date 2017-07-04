@@ -11,6 +11,7 @@ import {
 } from "monaco-languageclient";
 import { DisposableCollection } from "../../application/common";
 import { FileChangeType, FileSystem, FileSystemWatcher } from '../../filesystem/common';
+import { WorkspaceService } from "../../workspace/browser";
 import * as lang from "../../languages/common";
 import { Emitter, Event, TextDocument, TextDocumentWillSaveEvent, TextEdit } from "../../languages/common";
 import { MonacoModelResolver } from "./monaco-model-resolver";
@@ -44,13 +45,14 @@ export class MonacoWorkspace extends BaseMonacoWorkspace implements lang.Workspa
 
     constructor(
         @inject(FileSystem) protected readonly fileSystem: FileSystem,
+        @inject(WorkspaceService) protected readonly workspaceService: WorkspaceService,
         @inject(FileSystemWatcher) protected readonly fileSystemWatcher: FileSystemWatcher,
         @inject(MonacoModelResolver) protected readonly monacoModelResolver: MonacoModelResolver,
         @inject(MonacoToProtocolConverter) protected readonly m2p: MonacoToProtocolConverter,
         @inject(ProtocolToMonacoConverter) protected readonly p2m: ProtocolToMonacoConverter
     ) {
         super(m2p);
-        fileSystem.getWorkspaceRoot().then(rootStat => {
+        workspaceService.root.then(rootStat => {
             this._rootUri = rootStat.uri;
             this.resolveReady();
         });
@@ -68,7 +70,7 @@ export class MonacoWorkspace extends BaseMonacoWorkspace implements lang.Workspa
     }
 
     get rootPath(): string | null {
-        return this._rootUri && new URI(this._rootUri).path
+        return this._rootUri && new URI(this._rootUri).path.toString();
     }
 
     getTextDocument(uri: string): TextDocument | undefined {
@@ -95,7 +97,7 @@ export class MonacoWorkspace extends BaseMonacoWorkspace implements lang.Workspa
             );
             event.waitUntil(
                 Promise.race([resolveEdits, timeout]).then(edits =>
-                    this.p2m.asTextEdits(edits)
+                    this.p2m.asTextEdits(edits).map(edit => edit as monaco.editor.IIdentifiedSingleEditOperation)
                 )
             );
         }
@@ -116,8 +118,8 @@ export class MonacoWorkspace extends BaseMonacoWorkspace implements lang.Workspa
         const disposables = new DisposableCollection()
         const onFileEventEmitter = new lang.Emitter<lang.FileEvent>()
         disposables.push(onFileEventEmitter);
-        disposables.push(this.fileSystemWatcher.onFileChanges(event => {
-            for (const change of event.changes) {
+        disposables.push(this.fileSystemWatcher.onFilesChanged(changes => {
+            for (const change of changes) {
                 const result: [lang.FileChangeType, boolean | undefined] =
                     change.type === FileChangeType.ADDED ? [lang.FileChangeType.Created, ignoreCreateEvents] :
                         change.type === FileChangeType.UPDATED ? [lang.FileChangeType.Changed, ignoreChangeEvents] :
@@ -125,7 +127,7 @@ export class MonacoWorkspace extends BaseMonacoWorkspace implements lang.Workspa
 
                 const type = result[0];
                 const ignoreEvents = result[1];
-                const uri = change.uri;
+                const uri = change.uri.toString();
                 if (ignoreEvents === undefined && ignoreEvents === false && testGlob(globPattern, uri)) {
                     onFileEventEmitter.fire({ uri, type });
                 }

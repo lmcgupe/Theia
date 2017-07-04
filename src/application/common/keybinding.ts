@@ -29,7 +29,7 @@ export interface Keybinding {
 
 export const KeybindingContribution = Symbol("KeybindingContribution");
 export interface KeybindingContribution {
-    contribute(registry: KeybindingRegistry): void;
+    registerKeyBindings(keybindings: KeybindingRegistry): void;
 }
 
 export const KeybindingContext = Symbol("KeybindingContextExtension")
@@ -94,22 +94,20 @@ export class KeybindingContextRegistry {
 @injectable()
 export class KeybindingRegistry {
 
-    keybindings: { [index: string]: Keybinding[] }
-    commands: { [commandId: string]: Keybinding[] }
+    protected readonly keybindings: { [index: string]: Keybinding[] } = {};
+    protected readonly commands: { [commandId: string]: Keybinding[] } = {};
 
     constructor(
         @inject(CommandRegistry) protected commandRegistry: CommandRegistry,
         @inject(KeybindingContextRegistry) protected contextRegistry: KeybindingContextRegistry,
         @inject(ContributionProvider) @named(KeybindingContribution) protected contributions: ContributionProvider<KeybindingContribution>) {
 
-        this.keybindings = {};
-        this.commands = {};
         new KeyEventEmitter(commandRegistry, this);
     }
 
-    initialize() {
-        for (let contribution of this.contributions.getContributions()) {
-            contribution.contribute(this);
+    onStart(): void {
+        for (const contribution of this.contributions.getContributions()) {
+            contribution.registerKeyBindings(this);
         }
     }
 
@@ -123,6 +121,7 @@ export class KeybindingRegistry {
         const bindings = this.keybindings[keyCode.keystroke] || [];
         bindings.push(binding);
         this.keybindings[keyCode.keystroke] = bindings;
+
         const commands = this.commands[commandId] || [];
         commands.push(binding);
         this.commands[commandId] = bindings;
@@ -139,7 +138,7 @@ export class KeybindingRegistry {
      * @param keyCode the key code of the binding we are searching.
      */
     getKeybindingForKeyCode(keyCode: KeyCode): Keybinding | undefined {
-        return (this.keybindings[keyCode.keystroke] || []).find(binding => this.isValid(binding));
+        return (this.commands[keyCode.keystroke] || []).find(binding => this.isValid(binding));
     }
 
     private isValid(binding: Keybinding): boolean {

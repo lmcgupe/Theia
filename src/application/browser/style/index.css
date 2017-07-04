@@ -14,7 +14,6 @@ body {
   background: var(--theia-layout-color3);
 }
 
-
 .theia-ApplicationShell {
   position: absolute;
   top: 0;
@@ -24,16 +23,19 @@ body {
 }
 
 .theia-icon {
-    width: 18px;
-    height: 18px;
-    margin: 5px;
-    margin-left: 8px;
+  width: 18px;
+  height: 18px;
+  margin: 5px;
+  margin-left: 8px;
+}
+
+.theia-mod-disabled {
+  opacity: 0.4;
 }
 
 .p-Widget.p-mod-hidden {
   display: none !important;
 }
-
 
 /*-----------------------------------------------------------------------------
 | Import children style files
@@ -48,4 +50,5 @@ body {
 @import './variables-dark.css';
 @import './materialcolors.css';
 @import './scrollbars.css';
+@import './tree.css';
 

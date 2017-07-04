@@ -21,52 +21,92 @@ beforeEach(() => {
 
 describe("uri", () => {
 
-    describe("01 #getParent", () => {
+    describe("#getParent", () => {
 
-        it("Should return the parent.", () => {
+        it("of file:///foo/bar.txt", () => {
             expect(new URI("file:///foo/bar.txt").parent.toString()).equals("file:///foo");
         });
 
-    });
+        it("of file:///foo/", () => {
+            expect(new URI("file:///foo/").parent.toString()).equals("file:///foo");
+        });
 
-    describe("02 #lastSegment", () => {
+        it("of file:///foo", () => {
+            expect(new URI("file:///foo").parent.toString()).equals("file:///");
+        });
 
-        it("Should return the last segment.", () => {
-            expect(new URI("file:///foo").lastSegment).equals("foo");
-            expect(new URI("file:///foo/bar.txt").lastSegment).equals("bar.txt");
+        it("of file:///", () => {
+            expect(new URI("file:///").parent.toString()).equals("file:///");
+        });
+
+        it("of file://", () => {
+            expect(new URI("file://").parent.toString()).equals("file://");
         });
 
     });
 
-    describe("03 #appendPath", () => {
+    describe("#lastSegment", () => {
 
-        it("Should return with this when the the segments array is empty.", () => {
+        it("of file:///foo/bar.txt", () => {
+            expect(new URI("file:///foo/bar.txt").path.base).equals("bar.txt");
+        });
+
+        it("of file:///foo", () => {
+            expect(new URI("file:///foo").path.base).equals("foo");
+        });
+
+        it("of file:///", () => {
+            expect(new URI("file:///").path.base).equals("");
+        });
+
+        it("of file://", () => {
+            expect(new URI("file://").path.base).equals("");
+        });
+
+    });
+
+    describe("#appendPath", () => {
+
+        it("'' to file:///foo", () => {
             const uri = new URI("file:///foo");
-            expect(uri.appendPath("").toString()).to.be.equal(uri.toString());
+            expect(uri.resolve("").toString()).to.be.equal(uri.toString());
         });
 
-        it("Should append a single segment.", () => {
-            expect(new URI("file:///foo").appendPath("bar").toString()).to.be.equal("file:///foo/bar");
+        it("bar to file:///foo", () => {
+            expect(new URI("file:///foo").resolve("bar").toString()).to.be.equal("file:///foo/bar");
         });
 
-        it("Should append multiple segments.", () => {
-            expect(new URI("file:///foo").appendPath("bar/baz").toString()).to.be.equal("file:///foo/bar/baz");
+        it("bar/baz to file:///foo", () => {
+            expect(new URI("file:///foo").resolve("bar/baz").toString()).to.be.equal("file:///foo/bar/baz");
+        });
+
+        it("'' to file:///", () => {
+            const uri = new URI("file:///");
+            expect(uri.resolve("").toString()).to.be.equal(uri.toString());
+        });
+
+        it("bar to file:///", () => {
+            expect(new URI("file:///").resolve("bar").toString()).to.be.equal("file:///bar");
+        });
+
+        it("bar/baz to file:///", () => {
+            expect(new URI("file:///").resolve("bar/baz").toString()).to.be.equal("file:///bar/baz");
         });
 
     });
 
-    describe("04 #path", () => {
+    describe("#path", () => {
 
         it("Should return with the FS path from the URI.", () => {
-            expect(new URI("file:///foo/bar/baz.txt").path).equals("/foo/bar/baz.txt");
+            expect(new URI("file:///foo/bar/baz.txt").path.toString()).equals("/foo/bar/baz.txt");
         });
 
         it("Should not return the encoded path", () => {
-            expect(new URI("file:///foo 3/bar 4/baz 4.txt").path).equals("/foo 3/bar 4/baz 4.txt");
+            expect(new URI("file:///foo 3/bar 4/baz 4.txt").path.toString()).equals("/foo 3/bar 4/baz 4.txt");
         })
     });
 
-    describe("05 #withFragment", () => {
+    describe("#withFragment", () => {
 
         it("Should replace the fragment.", () => {
             expect(new URI("file:///foo/bar/baz.txt#345345").withFragment("foo").toString()).equals("file:///foo/bar/baz.txt#foo");
@@ -78,7 +118,7 @@ describe("uri", () => {
         });
     });
 
-    describe("06 #toString()", () => {
+    describe("#toString()", () => {
         it("should produce the non encoded string", () => {
             function check(uri: string): void {
                 expect(new URI(uri).toString(true)).equals(uri)
@@ -89,7 +129,7 @@ describe("uri", () => {
         })
     })
 
-    describe("07 #Uri.with...()", () => {
+    describe("#Uri.with...()", () => {
         it("produce proper URIs", () => {
             let uri = new URI().withScheme('file').withPath('/foo/bar.txt').withQuery("x=12").withFragment("baz")
             expect(uri.toString(true)).equals("file:///foo/bar.txt?x=12#baz")
