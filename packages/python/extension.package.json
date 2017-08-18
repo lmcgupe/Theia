@@ -14,5 +14,8 @@
       "frontend": "lib/browser/python-frontend-module",
       "backend": "lib/node/python-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

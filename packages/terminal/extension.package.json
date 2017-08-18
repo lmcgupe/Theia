@@ -18,5 +18,8 @@
       "frontend": "lib/browser/terminal-frontend-module",
       "backend": "lib/node/terminal-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

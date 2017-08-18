@@ -14,5 +14,8 @@
       "frontend": "lib/browser/workspace-frontend-module",
       "backend": "lib/node/workspace-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

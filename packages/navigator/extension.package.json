@@ -14,5 +14,8 @@
     {
       "frontend": "lib/browser/navigator-frontend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

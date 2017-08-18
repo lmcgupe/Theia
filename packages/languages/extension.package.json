@@ -15,5 +15,8 @@
       "frontend": "lib/browser/languages-frontend-module",
       "backend": "lib/node/languages-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

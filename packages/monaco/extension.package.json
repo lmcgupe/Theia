@@ -24,5 +24,8 @@
       "frontend": "lib/browser/monaco-browser-module",
       "frontendElectron": "lib/electron-browser/monaco-electron-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

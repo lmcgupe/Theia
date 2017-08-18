@@ -25,5 +25,8 @@
       "frontend": "lib/browser/filesystem-frontend-module",
       "backend": "lib/node/filesystem-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

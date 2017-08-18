@@ -17,5 +17,8 @@
       "frontend": "lib/browser/cpp-frontend-module",
       "backend": "lib/node/cpp-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

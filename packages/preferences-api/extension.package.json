@@ -9,5 +9,8 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
   }
 }

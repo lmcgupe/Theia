@@ -21,5 +21,8 @@
       "frontend": "lib/browser/preference-frontend-module",
       "backend": "lib/node/preference-backend-module"
     }
-  ]
+  ],
+  "scripts": {
+    "docs": "typedoc --tsconfig compile.tsconfig.json --options tdoptions.json ."
+  }
 }

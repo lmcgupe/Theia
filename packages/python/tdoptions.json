@@ -1,0 +1,12 @@
+{
+  "excludeNotExported": true,
+  "exclude": "lib, node_modules",
+  "experimentalDecorators": true,
+  "ignoreCompilerErrors": true,
+  "mode": "file",
+  "out": "../../docs/python",
+  "baseUrl": ".",
+  "paths": {
+    "@theia/*": ["node_modules/@theia/*"]
+  }
+}
